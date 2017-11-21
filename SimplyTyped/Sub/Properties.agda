@@ -66,9 +66,9 @@ keep*-shift* : ∀ {Γ Δ Θ} ts (Γ⊇Δ : Γ ⊇ Δ) (σ : Δ ⊢⋆ Θ) →
   shift* ts (Γ⊇Δ ⊇⊢⋆ σ) ≡ keep* ts Γ⊇Δ ⊇⊢⋆ shift* ts σ
 keep*-shift* []       Γ⊇Δ σ = refl
 keep*-shift* (t ∷ ts) Γ⊇Δ σ rewrite
-  assocᵣᵣₛ (drop {t} reflᵣ) Γ⊇Δ σ |
-  refl-⊇⊇ Γ⊇Δ |
-  sym (Γ⊇Δ ⊇⊇-refl) | sym (assocᵣᵣₛ (keep {t} Γ⊇Δ) wk σ) | Γ⊇Δ ⊇⊇-refl
+  assocᵣᵣₛ (wk {t}) Γ⊇Δ σ |
+  refl-⊇⊇ Γ⊇Δ | sym (Γ⊇Δ ⊇⊇-refl) |
+  sym (assocᵣᵣₛ (keep {t} Γ⊇Δ) wk σ) | Γ⊇Δ ⊇⊇-refl
   = keep*-shift* ts (keep Γ⊇Δ) (shift σ)
 
 refl-⊇⊢⋆_ : ∀ {Γ Δ} (σ : Γ ⊢⋆ Δ) →
@@ -131,8 +131,8 @@ mutual
 
   subˡ-⊇⊢⋆ : ∀ {Γ Δ Θ shape} {schema : Schema shape} (Γ⊇Δ : Γ ⊇ Δ) (σ : Δ ⊢⋆ Θ) (es : Children Θ schema) →
     subˡ (Γ⊇Δ ⊇⊢⋆ σ) es ≡ renˡ Γ⊇Δ (subˡ σ es)
-  subˡ-⊇⊢⋆                                Γ⊇Δ σ []       = refl
-  subˡ-⊇⊢⋆ {Γ} {_} {_} {_} {(ts , _) ∷ _} Γ⊇Δ σ (e ∷ es) rewrite
+  subˡ-⊇⊢⋆                         Γ⊇Δ σ []       = refl
+  subˡ-⊇⊢⋆ {schema = (ts , _) ∷ _} Γ⊇Δ σ (e ∷ es) rewrite
     keep*-shift* (toList ts) Γ⊇Δ σ |
     sub-⊇⊢⋆ (keep* (toList ts) Γ⊇Δ) (shift* (toList ts) σ) e |
     subˡ-⊇⊢⋆ Γ⊇Δ σ es
@@ -174,6 +174,14 @@ subᵛ-⊢⊢⋆  : ∀ {Γ Δ Θ t} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (v 
 subᵛ-⊢⊢⋆ σ (ρ , _) vz     = refl
 subᵛ-⊢⊢⋆ σ (ρ , _) (vs v) = subᵛ-⊢⊢⋆ σ ρ v
 
+shift*-⊢⊢⋆ : ∀ {Γ Δ Θ} ts (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) → shift* ts (σ ⊢⊢⋆ ρ) ≡ shift* ts σ ⊢⊢⋆ shift* ts ρ
+shift*-⊢⊢⋆ []       σ ρ = refl
+shift*-⊢⊢⋆ (t ∷ ts) σ ρ rewrite
+  assocᵣₛₛ (wk {t}) σ ρ |
+  cong (_⊢⊢⋆ ρ) (sym ((wk {t} ⊇⊢⋆ σ) ⊢⋆⊇-refl)) |
+  sym (assocₛᵣₛ ρ (wk {t}) (shift σ))
+  = shift*-⊢⊢⋆ ts (wk ⊇⊢⋆ σ , var vz) (wk ⊇⊢⋆ ρ , var vz)
+
 mutual
   sub-⊢⊢⋆ : ∀ {Γ Δ Θ t} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (e : Tm Δ t) →
     sub (σ ⊢⊢⋆ ρ) e ≡ sub σ (sub ρ e)
@@ -182,33 +190,15 @@ mutual
 
   subᶜ-⊢⊢⋆ : ∀ {Γ Δ Θ t c} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (e : Con Δ t c) →
     subᶜ (σ ⊢⊢⋆ ρ) e ≡ subᶜ σ (subᶜ ρ e)
-  subᶜ-⊢⊢⋆ σ ρ (sg x e) = {!!}
-  subᶜ-⊢⊢⋆ σ ρ (node schema es) = {!!}
---   subᶜ-⊢⊢⋆ σ ρ (bind t e) rewrite
---     assocᵣₛₛ (wk {t}) σ ρ | sym (cong (_⊢⊢⋆ ρ) ((wk {t} ⊇⊢⋆ σ) ⊢⋆⊇-refl)) |
---     sym (assocₛᵣₛ ρ (wk {t}) (shift σ)) | sub-⊢⊢⋆ (shift σ) (shift ρ) e
---     = refl
---   subᶜ-⊢⊢⋆ σ ρ (some t e) rewrite subᶜ-⊢⊢⋆ σ ρ e = refl
---   subᶜ-⊢⊢⋆ σ ρ (node es)  rewrite subˡ-⊢⊢⋆ σ ρ es = refl
+  subᶜ-⊢⊢⋆ σ ρ (sg x e)    rewrite subᶜ-⊢⊢⋆ σ ρ e = refl
+  subᶜ-⊢⊢⋆ σ ρ (node s es) rewrite subˡ-⊢⊢⋆ σ ρ es = refl
 
---   -- -- Is this version clearer?
---   -- subᶜ-⊢⊢⋆ σ ρ (bind t e) = cong (bind t) $
---   --     cong (λ x → sub₀ (x , var vz) e)
---   --         (assocᵣₛₛ (wk {t}) σ ρ
---   --       ⟨ trans ⟩
---   --         cong (_⊢⊢⋆ ρ) (sym ((wk {t} ⊇⊢⋆ σ) ⊢⋆⊇-refl))
---   --       ⟨ trans ⟩
---   --         sym (assocₛᵣₛ ρ (wk {t}) (shift σ)))
---   --   ⟨ trans ⟩
---   --     sub₀-⊢⊢⋆ (shift σ) (shift ρ) e
---   --   where
---   --     open import Function using (_⟨_⟩_; _$_)
-
-  -- subˡ-refl : ∀ {Γ shape} {schema : Schema shape} (es : Children Γ schema) → subˡ reflₛ es ≡ es
   subˡ-⊢⊢⋆ : ∀ {Γ Δ Θ shape} {schema : Schema shape} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (es : Children Δ schema) →
     subˡ (σ ⊢⊢⋆ ρ) es ≡ subˡ σ (subˡ ρ es)
-  subˡ-⊢⊢⋆ σ ρ []       = refl
-  subˡ-⊢⊢⋆ σ ρ (e ∷ es) = {!!} -- rewrite sub-⊢⊢⋆ σ ρ e | subˡ-⊢⊢⋆ σ ρ es = refl
+  subˡ-⊢⊢⋆                         σ ρ []       = refl
+  subˡ-⊢⊢⋆ {schema = (ts , _) ∷ _} σ ρ (e ∷ es) rewrite
+    shift*-⊢⊢⋆ (toList ts) σ ρ
+    = cong₂ _∷_ (sub-⊢⊢⋆ _ _ e) (subˡ-⊢⊢⋆ _ _ es)
 
 refl-⊢⊢⋆_ : ∀ {Γ Δ} (σ : Γ ⊢⋆ Δ) → reflₛ ⊢⊢⋆ σ ≡ σ
 refl-⊢⊢⋆ ∅       = refl
