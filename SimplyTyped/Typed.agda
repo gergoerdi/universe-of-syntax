@@ -11,10 +11,6 @@ open import Function
 open import Data.Vec
 open import Data.Product
 
-_<><_ : ∀ {n} → Ctx → Vec Ty n → Ctx
-Γ <>< [] = Γ
-Γ <>< (t ∷ ts) = (Γ , t) <>< ts
-
 mutual
   data Tm (Γ : Ctx) : Ty → Set where
     var : ∀ {t} → Var t Γ → Tm Γ t
@@ -26,4 +22,4 @@ mutual
 
   data Children (Γ : Ctx) : {shape : List ℕ} → Schema shape → Set where
     [] : Children Γ []
-    _∷_ : ∀ {k ks ss ts t} → Tm (Γ <>< ts) t → Children Γ {ks} ss → Children Γ {k ∷ ks} ((ts , t) ∷ ss)
+    _∷_ : ∀ {k ks ss ts t} → Tm (Γ <>< toList ts) t → Children Γ {ks} ss → Children Γ {k ∷ ks} ((ts , t) ∷ ss)

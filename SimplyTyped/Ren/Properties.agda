@@ -3,6 +3,15 @@ module SimplyTyped.Ren.Properties {a : _} (A : Set a) where
 open import SimplyTyped.Ctx A
 open import SimplyTyped.Ren A
 open import Relation.Binary.PropositionalEquality
+open import Data.List
+
+keep*-refl : ∀ {Γ} ts → keep* ts (reflᵣ {Γ}) ≡ reflᵣ
+keep*-refl {Γ} []        = refl
+keep*-refl {Γ} (t ∷ ts) = keep*-refl {Γ , t} ts
+
+keep*-⊇⊇ : ∀ {Γ Δ Θ} ts (Γ⊇Θ : Γ ⊇ Θ) (Θ⊇Δ : Θ ⊇ Δ) → (keep* ts Γ⊇Θ) ⊇⊇ (keep* ts Θ⊇Δ) ≡ keep* ts (Γ⊇Θ ⊇⊇ Θ⊇Δ)
+keep*-⊇⊇ []       Γ⊇Θ Θ⊇Δ = refl
+keep*-⊇⊇ (t ∷ ts) Γ⊇Θ Θ⊇Δ = keep*-⊇⊇ ts (keep {t} Γ⊇Θ) (keep {t} Θ⊇Δ)
 
 refl-⊇⊇_ : ∀ {Γ Δ} (Γ⊇Δ : Γ ⊇ Δ) →
   reflᵣ ⊇⊇ Γ⊇Δ ≡ Γ⊇Δ

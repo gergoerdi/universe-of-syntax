@@ -14,10 +14,6 @@ open import Data.Product
 
 open import Relation.Binary.PropositionalEquality
 
-ren-<>< : ∀ {Γ Δ n} → Γ ⊇ Δ → (ts : Vec Ty n) → Γ <>< ts ⊇ Δ <>< ts
-ren-<>< Γ⊇Δ [] = Γ⊇Δ
-ren-<>< Γ⊇Δ (_ ∷ ts) = ren-<>< (keep Γ⊇Δ) ts
-
 mutual
   ren : ∀ {Γ Δ t} → Γ ⊇ Δ → Tm Δ t → Tm Γ t
   ren Γ⊇Δ (var v) = var (renᵛ Γ⊇Δ v)
@@ -29,7 +25,7 @@ mutual
 
   renˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊇ Δ → Children Δ schema → Children Γ schema
   renˡ Γ⊇Δ [] = []
-  renˡ {schema = (ts , _) ∷ _} Γ⊇Δ (e ∷ es) = ren (ren-<>< Γ⊇Δ ts) e ∷ renˡ Γ⊇Δ es
+  renˡ {schema = (ts , _) ∷ _} Γ⊇Δ (e ∷ es) = ren (keep* (toList ts) Γ⊇Δ) e ∷ renˡ Γ⊇Δ es
 
 infixr 4 _,_
 infix 3 _⊢⋆_
@@ -58,9 +54,9 @@ subᵛ (σ , e) (vs v) = subᵛ σ v
 shift : ∀ {t Γ Δ} → Γ ⊢⋆ Δ → Γ , t ⊢⋆ Δ , t
 shift {t} σ = wk ⊇⊢⋆ σ , var vz
 
-sub-<>< : ∀ {Γ Δ n} → Γ ⊢⋆ Δ → (ts : Vec Ty n) → Γ <>< ts ⊢⋆ Δ <>< ts
-sub-<>< σ [] = σ
-sub-<>< σ (t ∷ ts) = sub-<>< (shift σ) ts
+shift* : ∀ {Γ Δ} ts → Γ ⊢⋆ Δ → Γ <>< ts ⊢⋆ Δ <>< ts
+shift* [] σ = σ
+shift* (t ∷ ts) σ = shift* ts (shift σ)
 
 ren⇒sub : ∀ {Γ Δ} → Γ ⊇ Δ → Γ ⊢⋆ Δ
 ren⇒sub done       = ∅
@@ -82,7 +78,7 @@ mutual
 
   subˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊢⋆ Δ → Children Δ schema → Children Γ schema
   subˡ σ [] = []
-  subˡ {schema = (ts , _) ∷ _} σ (e ∷ es) = sub (sub-<>< σ ts) e ∷ subˡ σ es
+  subˡ {schema = (ts , _) ∷ _} σ (e ∷ es) = sub (shift* (toList ts) σ) e ∷ subˡ σ es
 
 _⊢⊢⋆_ : ∀ {Γ Δ Θ} → Γ ⊢⋆ Θ → Θ ⊢⋆ Δ → Γ ⊢⋆ Δ
 σ ⊢⊢⋆ ∅ = ∅
