@@ -12,9 +12,10 @@ open import Data.Product
 open import Function.Equivalence hiding (sym)
 open import Function.Equality using (_⟨$⟩_)
 
--- -- This would not be strictly positive!
+-- -- This would not be strictly positive in the `fun` constructor!
 -- data Saturated : ∀ {Γ t} → Tm Γ t → Set where
 --   fun : ∀ {t u} {f : Tm ∅ (t ▷ u)} → Halts f → (∀ {e} → Saturated e → Saturated (f · e)) → Saturated f
+--   bool : ∀ {b : Tm ∅ Bool} → Halts b → Saturated b
 
 mutual
   Saturated : ∀ {t} → Tm ∅ t → Set
@@ -23,6 +24,7 @@ mutual
   Saturated′ : ∀ t → Tm ∅ t → Set
   Saturated′ ∙ _ = ⊥
   Saturated′ (t ▷ u) f = ∀ {e} → Saturated e → Saturated (f [·] e)
+  Saturated′ Bool _ = ⊤
 
 saturated⇒halts : ∀ {t e} → Saturated {t} e → Halts e
 saturated⇒halts = proj₁
@@ -43,10 +45,12 @@ step‿preserves‿saturated step = equivalence (fwd step) (bwd step)
     fwd : ∀ {t} {e e′ : Tm _ t} → e ==> e′ → Saturated e → Saturated e′
     fwd {∙}       step (halts , ())
     fwd {u ▷ t}   step (halts , sat) = Equivalence.to (step‿preserves‿halting step) ⟨$⟩ halts , λ e → fwd (appˡ step _) (sat e)
+    fwd {Bool}    step (halts , _) = Equivalence.to (step‿preserves‿halting step) ⟨$⟩ halts , _
 
     bwd : ∀ {t} {e e′ : Tm _ t} → e ==> e′ → Saturated e′ → Saturated e
     bwd {∙}       step (halts , ())
     bwd {u ▷ t}   step (halts , sat) = Equivalence.from (step‿preserves‿halting step) ⟨$⟩ halts , λ e → bwd (appˡ step _) (sat e)
+    bwd {Bool}    step (halts , _) =  Equivalence.from (step‿preserves‿halting step) ⟨$⟩ halts , _
 
 step*‿preserves‿saturated : ∀ {t} {e e′ : Tm _ t} → e ==>* e′ → Saturated e ⇔ Saturated e′
 step*‿preserves‿saturated ε = id
@@ -63,6 +67,10 @@ saturateᵛ (env , _) (vs x) = saturateᵛ env x
 app-lam* : ∀ {Γ t} {e e′ : Tm Γ t} → e ==>* e′ → Value e′ → ∀ {u} (f : Tm _ u) → ([lam] t f [·] e) ==>* sub (reflₛ , e′) f
 app-lam* steps v f = gmap _ (appʳ (lam _ _)) steps  ◅◅ app-lam f v ◅ ε
 
+if-cond* : ∀ {Γ t} {b b′ : Tm Γ _} → b ==>* b′ → ∀ (thn els : Tm Γ t) →
+  ([if] b [then] thn [else] els) ==>* ([if] b′ [then] thn [else] els)
+if-cond* steps thn els = gmap _ (λ step → if-cond step thn els) steps
+
 open import SimplyTyped.Ren Ty
 open import SimplyTyped.Sub.Properties STLC
 
@@ -78,6 +86,13 @@ saturate : ∀ {Γ σ} → Instantiation σ → ∀ {t} → (e : Tm Γ t) → Sa
 saturate         env          (var v)                       = saturateᵛ env v
 saturate         env          (f [·] e)                     with saturate env f | saturate env e
 saturate         env          (f [·] e) | _ , sat-f | sat-e = sat-f sat-e
+saturate         env          [true]                     = ([true] , ε , true) , _
+saturate         env          [false]                    = ([false] , ε , false) , _
+saturate         env          ([if] b [then] thn [else] els) with saturate env b
+saturate {Γ} {σ} env ([if] b [then] thn [else] els) | (_ , b-steps , true) , _ =
+  Equivalence.from (step*‿preserves‿saturated (if-cond* b-steps _ _ ◅◅ (if-true _ _ ◅ ε))) ⟨$⟩ saturate env thn
+saturate         env ([if] b [then] thn [else] els) | (_ , b-steps , false) , _ =
+  Equivalence.from (step*‿preserves‿saturated (if-cond* b-steps _ _ ◅◅ (if-false _ _ ◅ ε))) ⟨$⟩ saturate env els
 saturate {Γ} {σ} env {.u ▷ t} ([lam] u f) = value⇒halts (lam u (sub (shift σ) f)) , sat-f
   where
     f′ = sub (shift σ) f
