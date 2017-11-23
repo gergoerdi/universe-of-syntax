@@ -14,6 +14,10 @@ open import Data.Product
 
 open import Relation.Binary.PropositionalEquality
 
+ren-<>< : ∀ {Γ Δ n} → Γ ⊇ Δ → (ts : Vec Ty n) → Γ <>< ts ⊇ Δ <>< ts
+ren-<>< Γ⊇Δ [] = Γ⊇Δ
+ren-<>< Γ⊇Δ (_ ∷ ts) = ren-<>< (keep Γ⊇Δ) ts
+
 mutual
   ren : ∀ {Γ Δ t} → Γ ⊇ Δ → Tm Δ t → Tm Γ t
   ren Γ⊇Δ (var v) = var (renᵛ Γ⊇Δ v)
@@ -21,15 +25,11 @@ mutual
 
   renᶜ : ∀ {Γ Δ t c} → Γ ⊇ Δ → Con Δ t c → Con Γ t c
   renᶜ Γ⊇Δ (some x c)   = some x (renᶜ Γ⊇Δ c)
-  renᶜ Γ⊇Δ (node es wt) rewrite ren-sound Γ⊇Δ es = node (renˡ Γ⊇Δ es) wt
+  renᶜ Γ⊇Δ (node ss es) = node ss (renˡ Γ⊇Δ es)
 
-  renˡ : ∀ {Γ Δ shape} → Γ ⊇ Δ → Children Δ shape → Children Γ shape
+  renˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊇ Δ → Children Δ schema → Children Γ schema
   renˡ Γ⊇Δ [] = []
-  renˡ Γ⊇Δ ((ts , t , e) ∷ es) = (ts , t , ren (ren-<>< Γ⊇Δ ts) e) ∷ renˡ Γ⊇Δ es
-
-  ren-sound : ∀ {Γ Δ shape} → (Γ⊇Δ : Γ ⊇ Δ) → (es : Children Δ shape) → typesOf es ≡ typesOf (renˡ Γ⊇Δ es)
-  ren-sound Γ⊇Δ [] = refl
-  ren-sound Γ⊇Δ (x ∷ es) = cong₂ _∷_ refl (ren-sound Γ⊇Δ es)
+  renˡ {schema = (ts , _) ∷ _} Γ⊇Δ (e ∷ es) = ren (ren-<>< Γ⊇Δ ts) e ∷ renˡ Γ⊇Δ es
 
 infixr 4 _,_
 infix 3 _⊢⋆_
@@ -58,6 +58,10 @@ subᵛ (σ , e) (vs v) = subᵛ σ v
 shift : ∀ {t Γ Δ} → Γ ⊢⋆ Δ → Γ , t ⊢⋆ Δ , t
 shift {t} σ = wk ⊇⊢⋆ σ , var vz
 
+sub-<>< : ∀ {Γ Δ n} → Γ ⊢⋆ Δ → (ts : Vec Ty n) → Γ <>< ts ⊢⋆ Δ <>< ts
+sub-<>< σ [] = σ
+sub-<>< σ (t ∷ ts) = sub-<>< (shift σ) ts
+
 ren⇒sub : ∀ {Γ Δ} → Γ ⊇ Δ → Γ ⊢⋆ Δ
 ren⇒sub done       = ∅
 ren⇒sub (drop Γ⊇Δ) = wk ⊇⊢⋆ (ren⇒sub Γ⊇Δ)
@@ -67,20 +71,19 @@ reflₛ : ∀ {Γ} → Γ ⊢⋆ Γ
 reflₛ {∅}     = ∅
 reflₛ {Γ , t} = shift reflₛ
 
--- mutual
---   sub : ∀ {Γ Δ t} → Γ ⊢⋆ Δ → Tm Δ t → Tm Γ t
---   sub σ (var v)   = subᵛ σ v
---   sub σ (con i e) = con i (subᶜ σ  e)
+mutual
+  sub : ∀ {Γ Δ t} → Γ ⊢⋆ Δ → Tm Δ t → Tm Γ t
+  sub σ (var v) = subᵛ σ v
+  sub σ (con c) = con (subᶜ σ  c)
 
---   subᶜ : ∀ {c Γ Δ t} → Γ ⊢⋆ Δ → ⟦ c ⟧ᶜ Δ t → ⟦ c ⟧ᶜ Γ t
---   subᶜ σ (bind t e) = bind t (sub (shift σ) e)
---   subᶜ σ (node es)  = node (subˡ σ es)
---   subᶜ σ (some t e) = some t (subᶜ σ e)
+  subᶜ : ∀ {Γ Δ t c} → Γ ⊢⋆ Δ → Con Δ t c → Con Γ t c
+  subᶜ σ (some x e) = some x (subᶜ σ e)
+  subᶜ σ (node s es) = node s (subˡ σ es)
 
---   subˡ : ∀ {Γ Δ ts} → Γ ⊢⋆ Δ → All (Tm Δ) ts → All (Tm Γ) ts
---   subˡ σ [] = []
---   subˡ σ (e ∷ es) = sub σ e ∷ subˡ σ es
+  subˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊢⋆ Δ → Children Δ schema → Children Γ schema
+  subˡ σ [] = []
+  subˡ {schema = (ts , _) ∷ _} σ (e ∷ es) = sub (sub-<>< σ ts) e ∷ subˡ σ es
 
--- _⊢⊢⋆_ : ∀ {Γ Δ Θ} → Γ ⊢⋆ Θ → Θ ⊢⋆ Δ → Γ ⊢⋆ Δ
--- σ ⊢⊢⋆ ∅ = ∅
--- σ ⊢⊢⋆ (ρ , e) = (σ ⊢⊢⋆ ρ) , sub σ e
+_⊢⊢⋆_ : ∀ {Γ Δ Θ} → Γ ⊢⋆ Θ → Θ ⊢⋆ Δ → Γ ⊢⋆ Δ
+σ ⊢⊢⋆ ∅ = ∅
+σ ⊢⊢⋆ (ρ , e) = (σ ⊢⊢⋆ ρ) , sub σ e
