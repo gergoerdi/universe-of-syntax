@@ -23,9 +23,9 @@ mutual
   renᶜ Γ⊇Δ (sg x c)     = sg x (renᶜ Γ⊇Δ c)
   renᶜ Γ⊇Δ (node ss es) = node ss (renˡ Γ⊇Δ es)
 
-  renˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊇ Δ → Children Δ schema → Children Γ schema
+  renˡ : ∀ {Γ Δ sh} {sx : Schema sh} → Γ ⊇ Δ → Children Δ sx → Children Γ sx
   renˡ Γ⊇Δ [] = []
-  renˡ {schema = (ts , _) ∷ _} Γ⊇Δ (e ∷ es) = ren (keep* (toList ts) Γ⊇Δ) e ∷ renˡ Γ⊇Δ es
+  renˡ {sx = (ts , _) ∷ _} Γ⊇Δ (e ∷ es) = ren (keep* (toList ts) Γ⊇Δ) e ∷ renˡ Γ⊇Δ es
 
 infixr 4 _,_
 infix 3 _⊢⋆_
@@ -76,9 +76,9 @@ mutual
   subᶜ σ (sg x e)    = sg x (subᶜ σ e)
   subᶜ σ (node s es) = node s (subˡ σ es)
 
-  subˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊢⋆ Δ → Children Δ schema → Children Γ schema
+  subˡ : ∀ {Γ Δ sh} {sx : Schema sh} → Γ ⊢⋆ Δ → Children Δ sx → Children Γ sx
   subˡ σ [] = []
-  subˡ {schema = (ts , _) ∷ _} σ (e ∷ es) = sub (shift* (toList ts) σ) e ∷ subˡ σ es
+  subˡ {sx = (ts , _) ∷ _} σ (e ∷ es) = sub (shift* (toList ts) σ) e ∷ subˡ σ es
 
 _⊢⊢⋆_ : ∀ {Γ Δ Θ} → Γ ⊢⋆ Θ → Θ ⊢⋆ Δ → Γ ⊢⋆ Δ
 σ ⊢⊢⋆ ∅ = ∅
