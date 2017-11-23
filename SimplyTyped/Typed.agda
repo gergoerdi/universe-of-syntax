@@ -17,7 +17,7 @@ mutual
     con : ∀ {t} → Con Γ t code → Tm Γ t
 
   data Con (Γ : Ctx) (t : Ty) : Code → Set where
-    some : ∀ {A c} x → Con Γ t (c x) → Con Γ t (some A c)
+    sg : ∀ {A c} x → Con Γ t (c x) → Con Γ t (sg A c)
     node : ∀ {shape wt} (schema : Schema shape) → (es : Children Γ schema) → {{_ : wt schema t}} → Con Γ t (node shape wt)
 
   data Children (Γ : Ctx) : {shape : List ℕ} → Schema shape → Set where

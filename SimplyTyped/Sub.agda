@@ -20,7 +20,7 @@ mutual
   ren Γ⊇Δ (con c) = con (renᶜ Γ⊇Δ c)
 
   renᶜ : ∀ {Γ Δ t c} → Γ ⊇ Δ → Con Δ t c → Con Γ t c
-  renᶜ Γ⊇Δ (some x c)   = some x (renᶜ Γ⊇Δ c)
+  renᶜ Γ⊇Δ (sg x c)     = sg x (renᶜ Γ⊇Δ c)
   renᶜ Γ⊇Δ (node ss es) = node ss (renˡ Γ⊇Δ es)
 
   renˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊇ Δ → Children Δ schema → Children Γ schema
@@ -73,7 +73,7 @@ mutual
   sub σ (con c) = con (subᶜ σ  c)
 
   subᶜ : ∀ {Γ Δ t c} → Γ ⊢⋆ Δ → Con Δ t c → Con Γ t c
-  subᶜ σ (some x e) = some x (subᶜ σ e)
+  subᶜ σ (sg x e)    = sg x (subᶜ σ e)
   subᶜ σ (node s es) = node s (subˡ σ es)
 
   subˡ : ∀ {Γ Δ shape} {schema : Schema shape} → Γ ⊢⋆ Δ → Children Δ schema → Children Γ schema

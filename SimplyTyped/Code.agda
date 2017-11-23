@@ -10,5 +10,5 @@ Schema : List ℕ → Set
 Schema = All (λ k → Vec Ty k × Ty)
 
 data Code : Set₁ where
-  some : (A : Set) → (A → Code) → Code
+  sg : (A : Set) → (A → Code) → Code
   node : (shape : List ℕ) → (Schema shape → Ty → Set) → Code
