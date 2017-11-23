@@ -17,14 +17,17 @@ open import Relation.Binary.PropositionalEquality
 data `STLC : Set where
   `lam `app : `STLC
   `true `false `if : `STLC
+  `let `letrec : `STLC
 
 STLC : Code
 STLC = sg `STLC λ
-  { `lam   → sg Ty λ t → node (1 ∷ []) λ { ((t′ ∷ [] , u) ∷ []) t₀ → t′ ≡ t × t₀ ≡ t ▷ u }
-  ; `app   → node (0 ∷ 0 ∷ []) λ { (([] , t₁) ∷ ([] , t₂) ∷ []) t → t₁ ≡ t₂ ▷ t }
-  ; `true  → node [] λ { [] → Bool ≡_ }
-  ; `false → node [] λ { [] → Bool ≡_ }
-  ; `if    → node (0 ∷ 0 ∷ 0 ∷ []) (λ { (([] , b) ∷ ([] , t₁) ∷ ([] , t₂) ∷ []) t → b ≡ Bool × t₁ ≡ t₂ × t₁ ≡ t })
+  { `lam    → sg Ty λ t → node (1 ∷ []) λ { ((t′ ∷ [] , u) ∷ []) t₀ → t′ ≡ t × t₀ ≡ t ▷ u }
+  ; `app    → node (0 ∷ 0 ∷ []) λ { (([] , t₁) ∷ ([] , t₂) ∷ []) t → t₁ ≡ t₂ ▷ t }
+  ; `true   → node [] λ { [] → Bool ≡_ }
+  ; `false  → node [] λ { [] → Bool ≡_ }
+  ; `if     → node (0 ∷ 0 ∷ 0 ∷ []) (λ { (([] , b) ∷ ([] , t₁) ∷ ([] , t₂) ∷ []) t → b ≡ Bool × t₁ ≡ t₂ × t₁ ≡ t })
+  ; `let    → node (0 ∷ 1 ∷ []) λ { (([] , t₁) ∷ (t₂ ∷ [] , t₃) ∷ []) t → t₁ ≡ t₂ × t₃ ≡ t }
+  ; `letrec → node (1 ∷ 1 ∷ []) λ { ((t₀′ ∷ [] , t₀) ∷ (t₀″ ∷ [] , t′) ∷ []) t → t₀′ ≡ t₀ × t₀″ ≡ t₀ × t′ ≡ t }
   }
 
 open import SimplyTyped.Sub STLC public
@@ -44,6 +47,12 @@ pattern [false] = con (sg `false (node [] [] {{refl}}))
 
 -- [if]_[then]_[else]_ : ∀ {Γ t} → Tm Γ Bool → Tm Γ t → Tm Γ t → Tm Γ t
 pattern [if]_[then]_[else]_ b thn els = con (sg `if (node (([] , _) ∷ ([] , _) ∷ ([] , _) ∷ []) (b ∷ thn ∷ els ∷ []) {{refl , (refl , refl)}}))
+
+-- [let]_[in]_ : ∀ {Γ t u} → Tm Γ t → Tm (Γ , t) u → Tm Γ u
+pattern [let]_[in]_ e₀ e = con (sg `let (node (([] , _) ∷ (_ ∷ [] , _) ∷ []) (e₀ ∷ e ∷ []) {{refl , refl}}))
+
+-- [letrec]_[in]_ : ∀ {Γ t u} → Tm (Γ , t) t → Tm (Γ , t) u → Tm Γ u
+pattern [letrec]_[in]_ e₀ e = con (sg `letrec (node ((_ ∷ [] , _) ∷ (_ ∷ [] , _) ∷ []) (e₀ ∷ e ∷ []) {{refl , refl , refl}}))
 
 open import Relation.Binary
 open import Data.Star
