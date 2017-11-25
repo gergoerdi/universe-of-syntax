@@ -16,6 +16,7 @@ mutual
     sg : ∀ {A c} x → Con (c x) → Con (sg A c)
     node : ∀ {shape wt} → (es : Children shape) → Con (node shape wt)
 
+  infixr 24 _∣_∷_
   data Children : List ℕ → Set where
     [] : Children []
     _∣_∷_ : ∀ {k ks} → Vec Name k → Form → Children ks → Children (k ∷ ks)
