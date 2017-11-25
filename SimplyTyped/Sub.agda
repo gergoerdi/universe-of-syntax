@@ -20,12 +20,12 @@ mutual
   ren Γ⊇Δ (con c) = con (renᶜ Γ⊇Δ c)
 
   renᶜ : ∀ {Γ Δ t c} → Γ ⊇ Δ → Con Δ t c → Con Γ t c
-  renᶜ Γ⊇Δ (sg x c)     = sg x (renᶜ Γ⊇Δ c)
-  renᶜ Γ⊇Δ (node ss es) = node ss (renˡ Γ⊇Δ es)
+  renᶜ Γ⊇Δ (sg x c)      = sg x (renᶜ Γ⊇Δ c)
+  renᶜ Γ⊇Δ (node ts₀ es) = node ts₀ (renˡ Γ⊇Δ es)
 
-  renˡ : ∀ {Γ Δ sh} {sx : Schema sh} → Γ ⊇ Δ → Children Δ sx → Children Γ sx
-  renˡ Γ⊇Δ [] = []
-  renˡ {sx = (ts , _) ∷ _} Γ⊇Δ (e ∷ es) = ren (keep* (toList ts) Γ⊇Δ) e ∷ renˡ Γ⊇Δ es
+  renˡ : ∀ {Γ Δ n sh ts₀ ts} → Γ ⊇ Δ → Children Δ {n} ts₀ {sh} ts → Children Γ ts₀ ts
+  renˡ                     Γ⊇Δ []       = []
+  renˡ {sh = bs ∷ _} {ts₀} Γ⊇Δ (e ∷ es) = ren (keep* (visible bs ts₀) Γ⊇Δ) e ∷ renˡ Γ⊇Δ es
 
 infixr 4 _,_
 infix 3 _⊢⋆_
@@ -73,12 +73,12 @@ mutual
   sub σ (con c) = con (subᶜ σ  c)
 
   subᶜ : ∀ {Γ Δ t c} → Γ ⊢⋆ Δ → Con Δ t c → Con Γ t c
-  subᶜ σ (sg x e)    = sg x (subᶜ σ e)
-  subᶜ σ (node s es) = node s (subˡ σ es)
+  subᶜ σ (sg x e)      = sg x (subᶜ σ e)
+  subᶜ σ (node ts₀ es) = node ts₀ (subˡ σ es)
 
-  subˡ : ∀ {Γ Δ sh} {sx : Schema sh} → Γ ⊢⋆ Δ → Children Δ sx → Children Γ sx
+  subˡ : ∀ {Γ Δ n sh ts₀ ts} → Γ ⊢⋆ Δ → Children Δ {n} ts₀ {sh} ts → Children Γ ts₀ ts
   subˡ σ [] = []
-  subˡ {sx = (ts , _) ∷ _} σ (e ∷ es) = sub (shift* (toList ts) σ) e ∷ subˡ σ es
+  subˡ {sh = bs ∷ _} {ts₀} σ (e ∷ es) = sub (shift* (visible bs ts₀) σ) e ∷ subˡ σ es
 
 _⊢⊢⋆_ : ∀ {Γ Δ Θ} → Γ ⊢⋆ Θ → Θ ⊢⋆ Δ → Γ ⊢⋆ Δ
 σ ⊢⊢⋆ ∅ = ∅

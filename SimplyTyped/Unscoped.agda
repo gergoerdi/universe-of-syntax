@@ -4,8 +4,10 @@ module SimplyTyped.Unscoped {Ty : Set} (Name : Set) (code : SimplyTyped.Code.Cod
 
 open import Data.Nat
 open import Data.List
+open import Data.List.All
 open SimplyTyped.Code Ty
 open import Data.Vec
+open import Function
 
 mutual
   data Form : Set where
@@ -14,9 +16,4 @@ mutual
 
   data Con : Code → Set where
     sg : ∀ {A c} x → Con (c x) → Con (sg A c)
-    node : ∀ {shape wt} → (es : Children shape) → Con (node shape wt)
-
-  infixr 24 _∣_∷_
-  data Children : List ℕ → Set where
-    [] : Children []
-    _∣_∷_ : ∀ {k ks} → Vec Name k → Form → Children ks → Children (k ∷ ks)
+    node : ∀ {n shape wt} → (Vec Name n) → (es : All (const Form) shape) → Con (node n shape wt)

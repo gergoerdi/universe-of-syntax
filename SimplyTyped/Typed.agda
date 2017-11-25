@@ -9,6 +9,12 @@ open SimplyTyped.Code Ty
 open import SimplyTyped.Ctx Ty public
 open import Data.Vec
 open import Data.Product
+open import Function
+
+visible : ∀ {n} → Vec Binder n → Vec Ty n → List Ty
+visible []             []       = []
+visible (bound ∷ bs)   (t ∷ ts) = t ∷ visible bs ts
+visible (unbound ∷ bs) (_ ∷ ts) = visible bs ts
 
 mutual
   data Tm (Γ : Ctx) : Ty → Set where
@@ -17,8 +23,9 @@ mutual
 
   data Con (Γ : Ctx) (t : Ty) : Code → Set where
     sg : ∀ {A c} x → Con Γ t (c x) → Con Γ t (sg A c)
-    node : ∀ {shape wt} (schema : Schema shape) → (es : Children Γ schema) → {{_ : wt schema t}} → Con Γ t (node shape wt)
+    node : ∀ {n shape wt} (ts₀ : Vec Ty n) {ts : All (const Ty) shape} (es : Children Γ ts₀ ts) →
+      {{_ : wt ts₀ ts t}} → Con Γ t (node n shape wt)
 
-  data Children (Γ : Ctx) : {shape : List ℕ} → Schema shape → Set where
-    [] : Children Γ []
-    _∷_ : ∀ {k ks ss ts t} → Tm (Γ <>< toList ts) t → Children Γ {ks} ss → Children Γ {k ∷ ks} ((ts , t) ∷ ss)
+  data Children (Γ : Ctx) {n : ℕ} (ts₀ : Vec Ty n) : {sh : Shape n} → All (const Ty) sh → Set where
+    [] : Children Γ ts₀ []
+    _∷_ : ∀ {bs sh t ts} → Tm (Γ <>< visible bs ts₀) t → Children Γ ts₀ {sh} ts → Children Γ ts₀ {bs ∷ sh} (t ∷ ts)

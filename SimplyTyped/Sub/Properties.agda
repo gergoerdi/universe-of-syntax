@@ -18,13 +18,13 @@ mutual
   ren-refl (var v) rewrite renᵛ-refl v = refl
   ren-refl (con e) rewrite renᶜ-refl e = refl
 
-  renᶜ-refl : ∀ {c Γ t} → (e : Con Γ t c) → renᶜ reflᵣ e ≡ e
-  renᶜ-refl (sg x e)    rewrite renᶜ-refl e  = refl
-  renᶜ-refl (node s es) rewrite renˡ-refl es = refl
+  renᶜ-refl : ∀ {c Γ t} (e : Con Γ t c) → renᶜ reflᵣ e ≡ e
+  renᶜ-refl (sg x e)     rewrite renᶜ-refl e  = refl
+  renᶜ-refl (node ts es) rewrite renˡ-refl es = refl
 
-  renˡ-refl : ∀ {Γ sh} {sx : Schema sh} → (es : Children Γ sx) → renˡ reflᵣ es ≡ es
-  renˡ-refl []       = refl
-  renˡ-refl {Γ} {_} {(ts , _) ∷ _} (e ∷ es) rewrite keep*-refl {Γ} (toList ts) = cong₂ _∷_ (ren-refl e) (renˡ-refl es)
+  renˡ-refl : ∀ {Γ n sh ts₀ ts} (es : Children Γ {n} ts₀ {sh} ts) → renˡ reflᵣ es ≡ es
+  renˡ-refl                         []       = refl
+  renˡ-refl {Γ} {sh = bs ∷ _} {ts₀} (e ∷ es) rewrite keep*-refl {Γ} (visible bs ts₀) = cong₂ _∷_ (ren-refl e) (renˡ-refl es)
 
 mutual
   ren-⊇⊇ : ∀ {Γ Θ Δ t} (Γ⊇Θ : Γ ⊇ Θ) (Θ⊇Δ : Θ ⊇ Δ) (e : Tm Δ t) →
@@ -34,15 +34,15 @@ mutual
 
   renᶜ-⊇⊇ : ∀ {Γ Θ Δ t c} (Γ⊇Θ : Γ ⊇ Θ) (Θ⊇Δ : Θ ⊇ Δ) (e : Con Δ t c) →
     renᶜ Γ⊇Θ (renᶜ Θ⊇Δ e) ≡ renᶜ (Γ⊇Θ ⊇⊇ Θ⊇Δ) e
-  renᶜ-⊇⊇ Γ⊇Θ Θ⊇Δ (sg x e)    rewrite renᶜ-⊇⊇ Γ⊇Θ Θ⊇Δ e  = refl
-  renᶜ-⊇⊇ Γ⊇Θ Θ⊇Δ (node s es) rewrite renˡ-⊇⊇ Γ⊇Θ Θ⊇Δ es = refl
+  renᶜ-⊇⊇ Γ⊇Θ Θ⊇Δ (sg x e)     rewrite renᶜ-⊇⊇ Γ⊇Θ Θ⊇Δ e  = refl
+  renᶜ-⊇⊇ Γ⊇Θ Θ⊇Δ (node ts es) rewrite renˡ-⊇⊇ Γ⊇Θ Θ⊇Δ es = refl
 
-  renˡ-⊇⊇ : ∀ {Γ Θ Δ sh} {sx : Schema sh} (Γ⊇Θ : Γ ⊇ Θ) (Θ⊇Δ : Θ ⊇ Δ) (es : Children Δ sx) →
+  renˡ-⊇⊇ : ∀ {Γ Θ Δ n sh ts₀ ts} (Γ⊇Θ : Γ ⊇ Θ) (Θ⊇Δ : Θ ⊇ Δ) (es : Children Δ {n} ts₀ {sh} ts) →
     renˡ Γ⊇Θ (renˡ Θ⊇Δ es) ≡ renˡ (Γ⊇Θ ⊇⊇ Θ⊇Δ) es
   renˡ-⊇⊇ Γ⊇Θ Θ⊇Δ [] = refl
-  renˡ-⊇⊇ {sx = (ts , _) ∷ _} Γ⊇Θ Θ⊇Δ (e ∷ es) rewrite
-    ren-⊇⊇ (keep* (toList ts) Γ⊇Θ) (keep* (toList ts) Θ⊇Δ) e |
-    keep*-⊇⊇ (toList ts) Γ⊇Θ Θ⊇Δ |
+  renˡ-⊇⊇ {sh = bs ∷ _} {ts₀} Γ⊇Θ Θ⊇Δ (e ∷ es) rewrite
+    ren-⊇⊇ (keep* (visible bs ts₀) Γ⊇Θ) (keep* (visible bs ts₀) Θ⊇Δ) e |
+    keep*-⊇⊇ (visible bs ts₀) Γ⊇Θ Θ⊇Δ |
     renˡ-⊇⊇ Γ⊇Θ Θ⊇Δ es
     = refl
 
@@ -101,15 +101,15 @@ mutual
 
   subᶜ-⊢⋆⊇ : ∀ {Γ Δ Θ t c} (σ : Γ ⊢⋆ Δ) (Δ⊇Θ : Δ ⊇ Θ) (e : Con Θ t c) →
     subᶜ (σ ⊢⋆⊇ Δ⊇Θ) e ≡ subᶜ σ (renᶜ Δ⊇Θ e)
-  subᶜ-⊢⋆⊇ σ Δ⊇Θ (sg x e)    rewrite subᶜ-⊢⋆⊇ σ Δ⊇Θ e = refl
-  subᶜ-⊢⋆⊇ σ Δ⊇Θ (node s es) rewrite subˡ-⊢⋆⊇ σ Δ⊇Θ es = refl
+  subᶜ-⊢⋆⊇ σ Δ⊇Θ (sg x e)     rewrite subᶜ-⊢⋆⊇ σ Δ⊇Θ e = refl
+  subᶜ-⊢⋆⊇ σ Δ⊇Θ (node ts es) rewrite subˡ-⊢⋆⊇ σ Δ⊇Θ es = refl
 
-  subˡ-⊢⋆⊇ : ∀ {Γ Δ Θ sh} {sx : Schema sh} (σ : Γ ⊢⋆ Δ) (Δ⊇Θ : Δ ⊇ Θ) (es : Children Θ sx) →
+  subˡ-⊢⋆⊇ : ∀ {Γ Δ Θ n sh ts₀ ts} (σ : Γ ⊢⋆ Δ) (Δ⊇Θ : Δ ⊇ Θ) (es : Children Θ {n} ts₀ {sh} ts) →
     subˡ (σ ⊢⋆⊇ Δ⊇Θ) es ≡ subˡ σ (renˡ Δ⊇Θ es)
-  subˡ-⊢⋆⊇                         σ Δ⊇Θ []       = refl
-  subˡ-⊢⋆⊇ {sx = (ts , _) ∷ _} σ Δ⊇Θ (e ∷ es) rewrite
-    shift*-keep* (toList ts) σ Δ⊇Θ |
-    sub-⊢⋆⊇ (shift* (toList ts) σ) (keep* (toList ts) Δ⊇Θ) e |
+  subˡ-⊢⋆⊇                     σ Δ⊇Θ []       = refl
+  subˡ-⊢⋆⊇ {sh = bs ∷ _} {ts₀} σ Δ⊇Θ (e ∷ es) rewrite
+    shift*-keep* (visible bs ts₀) σ Δ⊇Θ |
+    sub-⊢⋆⊇ (shift* (visible bs ts₀) σ) (keep* (visible bs ts₀) Δ⊇Θ) e |
     subˡ-⊢⋆⊇ σ Δ⊇Θ es
     = refl
 
@@ -126,15 +126,15 @@ mutual
 
   subᶜ-⊇⊢⋆ : ∀ {Γ Δ Θ t c} (Γ⊇Δ : Γ ⊇ Δ) (σ : Δ ⊢⋆ Θ) (e : Con Θ t c) →
     subᶜ (Γ⊇Δ ⊇⊢⋆ σ) e ≡ renᶜ Γ⊇Δ (subᶜ σ e)
-  subᶜ-⊇⊢⋆ Γ⊇Δ σ (sg x e)    rewrite subᶜ-⊇⊢⋆ Γ⊇Δ σ e = refl
-  subᶜ-⊇⊢⋆ Γ⊇Δ σ (node s es) rewrite subˡ-⊇⊢⋆ Γ⊇Δ σ es = refl
+  subᶜ-⊇⊢⋆ Γ⊇Δ σ (sg x e)     rewrite subᶜ-⊇⊢⋆ Γ⊇Δ σ e = refl
+  subᶜ-⊇⊢⋆ Γ⊇Δ σ (node ts es) rewrite subˡ-⊇⊢⋆ Γ⊇Δ σ es = refl
 
-  subˡ-⊇⊢⋆ : ∀ {Γ Δ Θ sh} {sx : Schema sh} (Γ⊇Δ : Γ ⊇ Δ) (σ : Δ ⊢⋆ Θ) (es : Children Θ sx) →
+  subˡ-⊇⊢⋆ : ∀ {Γ Δ Θ n sh ts₀ ts} (Γ⊇Δ : Γ ⊇ Δ) (σ : Δ ⊢⋆ Θ) (es : Children Θ {n} ts₀ {sh} ts) →
     subˡ (Γ⊇Δ ⊇⊢⋆ σ) es ≡ renˡ Γ⊇Δ (subˡ σ es)
-  subˡ-⊇⊢⋆                         Γ⊇Δ σ []       = refl
-  subˡ-⊇⊢⋆ {sx = (ts , _) ∷ _} Γ⊇Δ σ (e ∷ es) rewrite
-    keep*-shift* (toList ts) Γ⊇Δ σ |
-    sub-⊇⊢⋆ (keep* (toList ts) Γ⊇Δ) (shift* (toList ts) σ) e |
+  subˡ-⊇⊢⋆                     Γ⊇Δ σ []       = refl
+  subˡ-⊇⊢⋆ {sh = bs ∷ _} {ts₀} Γ⊇Δ σ (e ∷ es) rewrite
+    keep*-shift* (visible bs ts₀) Γ⊇Δ σ |
+    sub-⊇⊢⋆ (keep* (visible bs ts₀) Γ⊇Δ) (shift* (visible bs ts₀) σ) e |
     subˡ-⊇⊢⋆ Γ⊇Δ σ es
     = refl
 
@@ -165,9 +165,9 @@ mutual
   subᶜ-refl (sg x e)    rewrite subᶜ-refl e = refl
   subᶜ-refl (node s es) rewrite subˡ-refl es = refl
 
-  subˡ-refl : ∀ {Γ sh} {sx : Schema sh} (es : Children Γ sx) → subˡ reflₛ es ≡ es
-  subˡ-refl                        []       = refl
-  subˡ-refl {Γ} {_} {(ts , _) ∷ _} (e ∷ es) rewrite shift*-refl {Γ} (toList ts) = cong₂ _∷_ (sub-refl _) (subˡ-refl _)
+  subˡ-refl : ∀ {Γ n sh ts₀ ts} (es : Children Γ {n} ts₀ {sh} ts) → subˡ reflₛ es ≡ es
+  subˡ-refl                         []       = refl
+  subˡ-refl {Γ} {sh = bs ∷ _} {ts₀} (e ∷ es) rewrite shift*-refl {Γ} (visible bs ts₀) = cong₂ _∷_ (sub-refl _) (subˡ-refl _)
 
 subᵛ-⊢⊢⋆  : ∀ {Γ Δ Θ t} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (v : Var t Δ) →
   subᵛ (σ ⊢⊢⋆ ρ) v ≡ sub σ (subᵛ ρ v)
@@ -193,11 +193,11 @@ mutual
   subᶜ-⊢⊢⋆ σ ρ (sg x e)    rewrite subᶜ-⊢⊢⋆ σ ρ e = refl
   subᶜ-⊢⊢⋆ σ ρ (node s es) rewrite subˡ-⊢⊢⋆ σ ρ es = refl
 
-  subˡ-⊢⊢⋆ : ∀ {Γ Δ Θ sh} {sx : Schema sh} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (es : Children Δ sx) →
+  subˡ-⊢⊢⋆ : ∀ {Γ Δ Θ n sh ts₀ ts} (σ : Γ ⊢⋆ Θ) (ρ : Θ ⊢⋆ Δ) (es : Children Δ {n} ts₀ {sh} ts) →
     subˡ (σ ⊢⊢⋆ ρ) es ≡ subˡ σ (subˡ ρ es)
-  subˡ-⊢⊢⋆                         σ ρ []       = refl
-  subˡ-⊢⊢⋆ {sx = (ts , _) ∷ _} σ ρ (e ∷ es) rewrite
-    shift*-⊢⊢⋆ (toList ts) σ ρ
+  subˡ-⊢⊢⋆                     σ ρ []       = refl
+  subˡ-⊢⊢⋆ {sh = bs ∷ _} {ts₀} σ ρ (e ∷ es) rewrite
+    shift*-⊢⊢⋆ (visible bs ts₀) σ ρ
     = cong₂ _∷_ (sub-⊢⊢⋆ _ _ e) (subˡ-⊢⊢⋆ _ _ es)
 
 refl-⊢⊢⋆_ : ∀ {Γ Δ} (σ : Γ ⊢⋆ Δ) → reflₛ ⊢⊢⋆ σ ≡ σ

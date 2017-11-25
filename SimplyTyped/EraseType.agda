@@ -21,9 +21,10 @@ x+sy≡sx+y : ∀ x y → x + suc y ≡ suc x + y
 x+sy≡sx+y zero    y = refl
 x+sy≡sx+y (suc x) y rewrite x+sy≡sx+y x y = refl
 
-size-<>< : ∀ {n} (Γ : Ctx) (ts : Vec Ty n) → size (Γ <>< toList ts) ≡ n + size Γ
-size-<><         Γ []        = refl
-size-<>< {suc n} Γ (t ∷ ts) rewrite size-<>< (Γ , t) ts = x+sy≡sx+y n (size Γ)
+size-<>< : ∀ {n} (Γ : Ctx) (bs : Vec Binder n) (ts : Vec Ty n) → size (Γ <>< visible bs ts) ≡ visibleCount bs + size Γ
+size-<><         Γ []             []       = refl
+size-<>< {suc n} Γ (unbound ∷ bs) (t ∷ ts) rewrite size-<>< Γ bs ts = refl
+size-<>< {suc n} Γ (bound ∷ bs)   (t ∷ ts) rewrite size-<>< (Γ , t) bs ts = x+sy≡sx+y (visibleCount bs) (size Γ)
 
 untypeᵛ : ∀ {Γ t} → Var t Γ → Fin (size Γ)
 untypeᵛ vz     = zero
@@ -35,9 +36,9 @@ mutual
   untype (con e) = con (untypeᶜ e)
 
   untypeᶜ : ∀ {Γ t c} → Con Γ t c → Conₑ (size Γ) c
-  untypeᶜ (sg x e)    = sg x (untypeᶜ e)
-  untypeᶜ (node s es) = node (untypeˡ es)
+  untypeᶜ (sg x e)     = sg x (untypeᶜ e)
+  untypeᶜ (node ts es) = node (untypeˡ es)
 
-  untypeˡ : ∀ {Γ sh} {sx : Schema sh} → Children Γ sx → Childrenₑ (size Γ) sh
+  untypeˡ : ∀ {Γ n sh ts₀ ts} → Children Γ {n} ts₀ {sh} ts → Childrenₑ (size Γ) sh
   untypeˡ                         []       = []
-  untypeˡ {Γ} {sx = (ts , _) ∷ _} (e ∷ es) = subst Expr (size-<>< Γ ts) (untype e) ∷ untypeˡ es
+  untypeˡ {Γ} {sh = bs ∷ _} {ts₀} (e ∷ es) = subst Expr (size-<>< Γ bs ts₀) (untype e) ∷ untypeˡ es
