@@ -1,6 +1,6 @@
 import SimplyTyped.Code
 
-module SimplyTyped.Unscoped {Ty : Set} (Name : Set) (code : SimplyTyped.Code.Code Ty) where
+module SimplyTyped.Unscoped {Ty : Set} (code : SimplyTyped.Code.Code Ty) (Name : Set) where
 
 open import Data.Nat
 open import Data.List

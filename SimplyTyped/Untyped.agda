@@ -24,8 +24,4 @@ mutual
 
   data Con (Γ : ℕ) : Code → Set where
     sg : ∀ {A c} x → Con Γ (c x) → Con Γ (sg A c)
-    node : ∀ {n shape wt} (es : Children Γ shape) → Con Γ (node n shape wt)
-
-  data Children (Γ : ℕ) : ∀ {n} → Shape n → Set where
-    [] : ∀ {n} → Children Γ {n} []
-    _∷_ : ∀ {n k ks} → Expr (visibleCount k + Γ) → Children Γ {n} ks → Children Γ (k ∷ ks)
+    node : ∀ {n shape wt} (es : All (λ k → Expr (visibleCount k + Γ)) shape) → Con Γ (node n shape wt)

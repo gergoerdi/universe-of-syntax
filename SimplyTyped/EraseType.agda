@@ -4,7 +4,7 @@ module SimplyTyped.EraseType {Ty : Set} (code : SimplyTyped.Code.Code Ty) where
 
 open SimplyTyped.Code Ty
 open import SimplyTyped.Typed code
-open import SimplyTyped.Untyped code renaming (Con to Conₑ; Children to Childrenₑ)
+open import SimplyTyped.Untyped code renaming (Con to Conₑ)
 open import Data.Nat
 open import Data.Fin hiding (_+_)
 open import Relation.Binary.PropositionalEquality
@@ -39,6 +39,6 @@ mutual
   untypeᶜ (sg x e)     = sg x (untypeᶜ e)
   untypeᶜ (node ts es) = node (untypeˡ es)
 
-  untypeˡ : ∀ {Γ n sh ts₀ ts} → Children Γ {n} ts₀ {sh} ts → Childrenₑ (size Γ) sh
+  untypeˡ : ∀ {Γ n sh ts₀ ts} → Children Γ {n} ts₀ {sh} ts → All (λ k → Expr (visibleCount k + size Γ)) sh
   untypeˡ                         []       = []
   untypeˡ {Γ} {sh = bs ∷ _} {ts₀} (e ∷ es) = subst Expr (size-<>< Γ bs ts₀) (untype e) ∷ untypeˡ es
