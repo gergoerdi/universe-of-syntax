@@ -87,5 +87,34 @@ typecheck Γ ([if]₀ b [then] thn [else] els) = do
   refl ← decToMaybe (t ≟ₜ t′)
   pure (, [if] b′ [then] thn′ [else] els′ , refl)
 
+open import Data.String renaming (_≟_ to _≟ₛ_)
+
+Name : Set
+Name = String
+
+open import SimplyTyped.Unscoped STLC Name
+open import SimplyTyped.ScopeCheck STLC _≟ₛ_
+open import Data.Vec using ([]; _∷_)
+
+module _ where
+  -- [lam]ₙ : Name → Ty → Form → Form
+  pattern [lam]ₙ v t e = con (sg `lam (sg t (node (v ∷ []) (e ∷ []))))
+
+  -- _[·]ₙ_ : Form → Form → Form
+  pattern _[·]ₙ_ f e = con (sg `app (node [] (f ∷ e ∷ [])))
+
+  -- [true]ₙ [false]ₙ : Form
+  pattern [true]ₙ = con (sg `true (node [] []))
+  pattern [false]ₙ = con (sg `false (node [] []))
+
+  -- [if]ₙ_[then]_[else]_ : Form → Form → Form → Form
+  pattern [if]ₙ_[then]_[else]_ b thn els = con (sg `if (node [] (b ∷ thn ∷ els ∷ [])))
+
+scopeAndType : Form → Maybe (∃ (Tm ∅))
+scopeAndType e = do
+  e′ ← resolveNames [] e
+  (t , e″ , refl) ← typecheck ∅ e′
+  pure (t , e″)
+
 ex₁ : Tm ∅ (∙ ▷ ∙)
-ex₁ = proj₁ (proj₂ (from-just (typecheck ∅ ([lam]₀ ∙ (var zero)))))
+ex₁ = proj₂ (from-just (scopeAndType ([lam]ₙ "x" ∙ (var "x"))))
