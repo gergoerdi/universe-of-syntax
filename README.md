@@ -132,6 +132,44 @@ STLC = sg `STLC λ
   }
 ```
 
+In fact, we can easily implement a transformation that gets rid of
+`let`s in some input language by inlining them:
+
+```
+data Phase : Set where
+  input inlined : Phase
+
+data `STLC : Phase → Set where
+  `lam `app : ∀ {p} → `STLC p
+  `let : `STLC input
+
+STLC : Phase → Code
+STLC p = sg (`STLC p) aux
+  where
+    aux : `STLC p → Code
+    aux `lam   = sg Ty λ t → node 1 ((bound ∷ []) ∷ []) λ { (t′ ∷ []) (u ∷ []) t₀ → t′ ≡ t × t₀ ≡ t ▷ u }
+    aux `app   = node 0 ([] ∷ [] ∷ []) λ { [] (t₁ ∷ t₂ ∷ []) t → t₁ ≡ t₂ ▷ t }
+    aux `let   = node 1 ((unbound ∷ []) ∷ (bound ∷ []) ∷ []) λ { (t₀ ∷ []) (t₁ ∷ t₂ ∷ []) t → t₀ ≡ t₁ × t₂ ≡ t }
+
+open import SimplyTyped.Ctx Ty
+open import SimplyTyped.Typed hiding (Tm)
+
+Tm : (p : Phase) → Ctx → Ty → Set
+Tm p = SimplyTyped.Typed.Tm (STLC p)
+
+pattern [lam] t e = con (sg `lam (sg t (node (_ ∷ []) (e ∷ []) {{refl , refl}})))
+pattern _[·]_ f e = con (sg `app (node [] (f ∷ e ∷ []) {{refl}}))
+pattern [let]_[in]_ e₀ e = con (sg `let (node (_ ∷ []) (e₀ ∷ e ∷ []) {{refl , refl}}))
+
+open import SimplyTyped.Sub (STLC inlined)
+
+inline : ∀ {Γ Δ t} → Γ ⊢⋆ Δ → Tm input Δ t → Tm inlined Γ t
+inline σ (var v)           = subᵛ σ v
+inline σ ([lam] t e)       = [lam] t (inline (shift σ) e)
+inline σ (f [·] e)         = inline σ f [·] inline σ e
+inline σ ([let] e₀ [in] e) = inline (σ , inline σ e₀) e
+```
+
 We can also express `letrec` by simply making the newly-introduced variable
 bound in both subterms:
 
