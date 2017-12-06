@@ -1,6 +1,7 @@
 module STLC.Norm where
 
 open import STLC
+open import STLC.Sem
 
 open import Relation.Binary.PropositionalEquality
 open import Data.Empty
