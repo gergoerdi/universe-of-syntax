@@ -7,7 +7,8 @@ module SimplyTyped.Sub {Ty : Set} (code : SimplyTyped.Code.Code Ty) where
 open import Data.Vec
 open SimplyTyped.Code Ty
 
-open SimplyTyped.Typed code public
+open SimplyTyped.Typed code
+open import SimplyTyped.Ctx Ty
 open import SimplyTyped.Ren Ty
 open import Data.List.All
 open import Data.Product

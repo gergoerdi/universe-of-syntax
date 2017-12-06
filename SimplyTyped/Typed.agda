@@ -6,7 +6,7 @@ open import Data.List
 open import Data.Nat
 open import Data.List.All
 open SimplyTyped.Code Ty
-open import SimplyTyped.Ctx Ty public
+open import SimplyTyped.Ctx Ty
 open import Data.Vec
 open import Data.Product
 open import Function

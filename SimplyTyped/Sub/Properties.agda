@@ -4,6 +4,8 @@ import SimplyTyped.Typed
 module SimplyTyped.Sub.Properties {Ty : Set} (code : SimplyTyped.Code.Code Ty) where
 
 open SimplyTyped.Code Ty
+open import SimplyTyped.Ctx Ty
+open SimplyTyped.Typed code
 open import SimplyTyped.Sub code
 open import SimplyTyped.Ren Ty
 open import SimplyTyped.Ren.Properties Ty

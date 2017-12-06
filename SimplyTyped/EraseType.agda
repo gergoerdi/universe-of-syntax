@@ -3,6 +3,7 @@ import SimplyTyped.Code
 module SimplyTyped.EraseType {Ty : Set} (code : SimplyTyped.Code.Code Ty) where
 
 open SimplyTyped.Code Ty
+open import SimplyTyped.Ctx Ty
 open import SimplyTyped.Typed code
 open import SimplyTyped.Untyped code renaming (Con to Conₑ)
 open import Data.Nat

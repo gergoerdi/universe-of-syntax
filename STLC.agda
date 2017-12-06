@@ -27,6 +27,8 @@ STLC = sg `STLC λ
   ; `if    → node 0 ([] ∷ [] ∷ [] ∷ []) (λ { [] (b ∷ t₁ ∷ t₂ ∷ []) t → b ≡ Bool × t₁ ≡ t₂ × t₁ ≡ t })
   }
 
+open import SimplyTyped.Ctx Ty public
+open import SimplyTyped.Typed STLC public
 open import SimplyTyped.Sub STLC public
 
 [var] : ∀ {t Γ} → Var t Γ → Tm Γ t
