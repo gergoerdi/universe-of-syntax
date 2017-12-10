@@ -28,11 +28,7 @@ mutual
   renˡ                     Γ⊇Δ []       = []
   renˡ {sh = bs ∷ _} {ts₀} Γ⊇Δ (e ∷ es) = ren (keep* (visible bs ts₀) Γ⊇Δ) e ∷ renˡ Γ⊇Δ es
 
-infixr 4 _,_
-infix 3 _⊢⋆_
-data _⊢⋆_ (Γ : Ctx) : Ctx → Set where
-  ∅ : Γ ⊢⋆ ∅
-  _,_ : ∀ {t Δ} → (σ : Γ ⊢⋆ Δ) → (e : Tm Γ t) → Γ ⊢⋆ Δ , t
+open import SimplyTyped.Sub.Core Tm public
 
 infixr 20 _⊇⊢⋆_
 _⊇⊢⋆_ : ∀ {Γ Δ Θ} → Θ ⊇ Γ → Γ ⊢⋆ Δ → Θ ⊢⋆ Δ
@@ -47,10 +43,6 @@ _⊢⋆⊇_ : ∀ {Γ Δ Θ} → Γ ⊢⋆ Δ → Δ ⊇ Θ → Γ ⊢⋆ Θ
 
 wkₛ : ∀ {t Γ Δ} → Γ ⊢⋆ Δ → Γ , t ⊢⋆ Δ
 wkₛ σ = wk ⊇⊢⋆ σ
-
-subᵛ : ∀ {Γ Δ t} → Γ ⊢⋆ Δ → Var t Δ → Tm Γ t
-subᵛ (σ , e) vz     = e
-subᵛ (σ , e) (vs v) = subᵛ σ v
 
 shift : ∀ {t Γ Δ} → Γ ⊢⋆ Δ → Γ , t ⊢⋆ Δ , t
 shift {t} σ = wk ⊇⊢⋆ σ , var vz
