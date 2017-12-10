@@ -78,6 +78,18 @@ refl-⊇⊢⋆_ : ∀ {Γ Δ} (σ : Γ ⊢⋆ Δ) →
 refl-⊇⊢⋆ ∅       = refl
 refl-⊇⊢⋆ (σ , e) rewrite refl-⊇⊢⋆ σ | ren-refl e = refl
 
+_⊇⊢⋆-refl : ∀ {Γ Δ} (Γ⊇Δ : Γ ⊇ Δ) → Γ⊇Δ ⊇⊢⋆ reflₛ ≡ ren⇒sub Γ⊇Δ
+done         ⊇⊢⋆-refl = refl
+drop {t} Γ⊇Δ ⊇⊢⋆-refl rewrite
+  sym (refl-⊇⊇ Γ⊇Δ) |
+  sym (assocᵣᵣₛ (wk {t}) Γ⊇Δ reflₛ) | Γ⊇Δ ⊇⊢⋆-refl |
+  refl-⊇⊇ Γ⊇Δ
+  = refl
+keep {t} Γ⊇Δ ⊇⊢⋆-refl rewrite
+  assocᵣᵣₛ (keep {t} Γ⊇Δ) (drop reflᵣ) reflₛ |
+  Γ⊇Δ ⊇⊇-refl | (drop {t} Γ⊇Δ) ⊇⊢⋆-refl
+  = refl
+
 _⊢⋆⊇-refl : ∀ {Γ Δ} (σ : Γ ⊢⋆ Δ) → σ ⊢⋆⊇ reflᵣ ≡ σ
 ∅       ⊢⋆⊇-refl = refl
 (σ , e) ⊢⋆⊇-refl rewrite σ ⊢⋆⊇-refl = refl
